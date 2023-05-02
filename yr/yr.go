@@ -9,9 +9,8 @@ import (
         "strings"
         "errors"
         "github.com/Tj12501/funtemps/conv"
-        //"minyr/conv"
-        //"log"
 )
+
 	func CelsiusToFahrenheitString(celsius string) (string, error) {
         	var fahrFloat float64
         	var err error
@@ -87,4 +86,56 @@ import (
         	}
 
         	return lastLine, nil
-}
+	}
+
+	func CalculateAverageTemperature(filepath, unit string) (float64, error) {
+        file, err := os.Open(filepath)
+        if err != nil {
+                return 0, fmt.Errorf("could not open file: %w", err)
+        }
+        defer file.Close()
+
+        scanner := bufio.NewScanner(file)
+        var sum float64
+        var count int
+
+        for scanner.Scan() {
+                line := scanner.Text()
+
+                // Split the lines
+                parts := strings.Split(strings.TrimSpace(line), ";")
+                if len(parts) != 4 {
+                        fmt.Printf("Skipping line: %s\n", line)
+                        continue
+                }
+
+                // Parse the temperature
+                temperatureStr := parts[3]
+                temperature, err := strconv.ParseFloat(temperatureStr, 64)
+                if err == nil {
+                        // Successfully converted to float, process the temperature value
+                        fmt.Printf("Temperature: %f\n", temperature)
+                } else {
+                        // Failed to convert to float, skip line
+                        fmt.Printf("Skipping line: %s\n", line)
+                        continue
+                }
+
+                // Add temperature to sum
+                sum += temperature
+                count++
+        }
+
+        if err := scanner.Err(); err != nil {
+                return 0, fmt.Errorf("could not read file: %w", err)
+        }
+
+        // Calculate average temperature
+        if count == 0 {
+                return 0, fmt.Errorf("no valid temperature readings found")
+        }
+
+        average := sum / float64(count)
+
+        return average, nil
+	}
